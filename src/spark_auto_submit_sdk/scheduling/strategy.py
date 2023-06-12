@@ -37,8 +37,20 @@ class LocalSchedulingStrategy(SchedulingStrategy):
 # 提交到远程主机spark的任务
 class RemoteSchedulingStrategy(SchedulingStrategy):
     def schedule(self, tasks):
-        print("Performing remote scheduling.")
+        # 打印调度任务信息
+        loger.info("Performing Remote scheduling.")
         # 调度逻辑实现
+        result_list = []
+        for task in tasks:
+            # 打印任务信息
+            loger.info("Scheduling task: %s", task.name)
+            # 调度逻辑实现
+            with performance_decorator(task.name):
+                result = task.run()
+            # 将结果信息添加到结果信息列表
+            result_list.append(result)
+        # 返回结果信息列表
+        return result_list
 
 
 # class PrioritySchedulingStrategy(SchedulingStrategy):

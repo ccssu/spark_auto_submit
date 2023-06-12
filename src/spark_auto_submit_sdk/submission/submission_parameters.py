@@ -3,6 +3,7 @@
 # 类名: SubmissionParameters
 # 作用: 定义应用程序提交参数的数据结构，包括应用程序名称、主文件路径、应用程序参数等。
 
+import os
 import copy
 from typing import Any, Dict, List
 
@@ -12,18 +13,10 @@ class SubmissionParameters:
         sdk_config = copy.deepcopy(sdk_config)
         project_package = copy.deepcopy(project_package)
         params_dict = copy.deepcopy(params_dict)
+        self.project_package = project_package
 
         self.spark_submit_home = sdk_config.get("spark-submit")
         self.spark_submit_args = sdk_config.get("spark_submit_args")
-        self.spark_submit_args.append(
-            {"--py-files": project_package.get("project_zip_path")}
-        )
-        self.spark_submit_args.append(
-            {"--archives": f"{project_package.get('python_zip_path')}#PY3"}
-        )
-        self.spark_submit_args.append(
-            {"--conf": "spark.yarn.appMasterEnv.PYSPARK_PYTHON=./PY3/bin/python"}
-        )
         self.app_name = params_dict.get("app_name", "test_app")
         self.spark_submit_args.append({"--name": self.app_name})
         self.main_file = params_dict.get("main_file")
@@ -48,14 +41,37 @@ class SubmissionParameters:
             "args": self.args,
         }
 
+    # 生产spark-submit依赖包
+    def __to_spark_submit_package(self) -> str:
+        project_package = self.project_package
+        package_list = []
+        package_list.append({"--py-files": project_package.get("project_zip_path")})
+        package_list.append(
+            {"--archives": f"{project_package.get('python_zip_path')}#PY3"}
+        )
+        project_zip_path = project_package.get("project_zip_path")
+        # 去掉文件.zip后缀
+        project_zip_name = os.path.basename(project_zip_path)
+        project_zip_name = project_zip_name.split(".")[0]
+        package_list.append(
+            {
+                "--conf": f"spark.yarn.appMasterEnv.PYSPARK_PYTHON=./PY3/{project_zip_name}/bin/python"
+            }
+        )
+        return package_list
+
     # 生成spark-submit命令
     def to_spark_submit_command(self) -> str:
         # spark_submit_args.append({"--py-files": project_package.get('project_zip_path')})
         # spark_submit_args.append({"--archives": f"{project_package.get('python_zip_path')}#PY3"})
         # spark_submit_args.append({"--conf": "spark.yarn.appMasterEnv.PYSPARK_PYTHON=./PY3/bin/python"})
+        package_list = self.__to_spark_submit_package()
         spark_submit_args = [
             self.__join_values(data) for data in self.spark_submit_args
         ]
+        for package in package_list:
+            spark_submit_args.append(self.__join_values(package))
+
         args = [self.__join_values(arg) for arg in self.args]
         submit_command = (
             self.spark_submit_home

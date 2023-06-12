@@ -28,5 +28,9 @@ class Scheduler:
         for task in tasks:
             self.tasks.remove(task)
 
+    # 调度单个任务
+    def schedule_task(self, task):
+        return self.scheduling_strategy.schedule([task])
+
     def schedule_tasks(self):
         return self.scheduling_strategy.schedule(self.tasks)

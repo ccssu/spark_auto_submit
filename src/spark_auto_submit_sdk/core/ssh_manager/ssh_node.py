@@ -8,17 +8,24 @@ import socket
 import paramiko
 from sshtunnel import SSHTunnelForwarder
 from tqdm import tqdm
+
 logger = logging.getLogger(__name__)
 from .common import BaseNode
-__all__ = ['SSHNode']
+
+__all__ = ["SSHNode"]
+
+
 class SSHNode(BaseNode):
     def __enter__(self):
         self.connect()
         return self
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.disconnect()
 
-    def __init__(self, hostname, port=22, username=None, password=None, private_key=None):
+    def __init__(
+        self, hostname, port=22, username=None, password=None, private_key=None
+    ):
         super().__init__(hostname, port, username, password, private_key)
         self.ssh_client = None
 
@@ -30,15 +37,19 @@ class SSHNode(BaseNode):
         self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         if self.private_key is not None:
-            self.ssh_client.connect(self.hostname, self.port, self.username, pkey=self.private_key)
+            self.ssh_client.connect(
+                self.hostname, self.port, self.username, pkey=self.private_key
+            )
         else:
-            self.ssh_client.connect(self.hostname, self.port, self.username, self.password)
+            self.ssh_client.connect(
+                self.hostname, self.port, self.username, self.password
+            )
 
     def disconnect(self):
         if self.ssh_client is not None:
             self.ssh_client.close()
             self.ssh_client = None
-  
+
     def execute_command(self, command, callack=None):
         if self.ssh_client is None:
             raise Exception("SSH connection not established")
@@ -47,18 +58,18 @@ class SSHNode(BaseNode):
         if callack:
             callack(result)
         return result
-    
+
     def transfer_data(self, source_path, destination_path):
         if self.ssh_client is None:
             raise Exception("SSH connection not established")
         # 注意暂时只能上传文件，不能上传文件夹
         check_file = os.path.isfile(source_path)
         logger.warning(f"注意暂时只能上传文件，不能上传文件夹, 传入的路径是{source_path} 是否是文件：{check_file}")
-        
+
         sftp_client = self.ssh_client.open_sftp()
         self._upload_file(sftp_client, source_path, destination_path)
         sftp_client.close()
-        
+
     def download_file(self, remote_file, local_path):
         if self.sftp_client:
             self.sftp_client.get(remote_file, local_path)
@@ -107,5 +118,3 @@ class SSHNode(BaseNode):
                 return False
         logger.error("SFTP connection is not established.")
         raise Exception("SFTP connection is not established.")
-
-

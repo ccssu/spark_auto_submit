@@ -10,7 +10,11 @@ from spark_auto_submit_sdk.scheduling.strategy import LocalSchedulingStrategy
 from spark_auto_submit_sdk.scheduling.strategy import RemoteSchedulingStrategy
 
 # /workspace/spark_auto_submit_sdk/src/submission/task.py
-from spark_auto_submit_sdk.submission.task import PackageTask, BuildCommandTask, SubmitCommandTask
+from spark_auto_submit_sdk.submission.task import (
+    PackageTask,
+    BuildCommandTask,
+    SubmitCommandTask,
+)
 
 
 class SparkAutoSubmitSDKFactory:
@@ -24,8 +28,8 @@ class SparkAutoSubmitSDKFactory:
         )
 
     # PackageTask
-    def create_package_task(self, name, pack_config):
-        return PackageTask(name, pack_config)
+    def create_package_task(self, name, pack_config, chache=False):
+        return PackageTask(name, pack_config, chache=chache)
 
     # BuildCommandTask
     def create_build_command_task(self, name, sdk_config, project_package, params_dict):

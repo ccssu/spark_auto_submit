@@ -15,6 +15,7 @@ from spark_auto_submit_sdk.core.configuration.settings import Settings
 
 __all__ = ["SparkAutoSubmitSDK"]
 
+
 class SparkAutoSubmitSDK:
     def __init__(self, config=Settings.DEFAULT_CONFIG_FILE):
         self.factory = SparkAutoSubmitSDKFactory()
@@ -44,24 +45,24 @@ class SparkAutoSubmitSDK:
         # # 注册观察者
         # self.submission_manager.register_observer(self.monitoring)
 
-    def __pack_project(self):
+    def __pack_project(self, chache=False):
         # 打包项目
         package_task = self.factory.create_package_task(
-            "package_task", self.config.get("LOCAL_PROJECT")
+            "package_task", self.config.get("LOCAL_PROJECT"), chache=chache
         )
         return self.__single_execute_task(package_task)
 
         # 执行单个任务 保证任务队列为空
 
     def __single_execute_task(self, task):
-        assert len(self.scheduler.tasks) == 0
-        self.add_task(task)
-        result_list = self.schedule_tasks()
+        result_list = self.scheduler.schedule_task(task)
         return result_list[0]
 
-    def create_submission_parameters(self, app_name, main_file, args):
+    def create_submission_parameters(self, app_name, main_file, args, *, chache=True):
+
         sdk_config = self.config.get("SPARK_SUBMIT")
-        project_package = self.__pack_project()
+        project_package = self.__pack_project(chache=chache)
+
         params_dict = {"app_name": app_name, "main_file": main_file, "args": args}
         # 构建指令任务
         build_command_task = self.factory.create_build_command_task(
@@ -75,8 +76,6 @@ class SparkAutoSubmitSDK:
         submit_command_task = self.factory.create_submit_command_task(
             "submit_command_task", submission_parameters
         )
-        print("submit_command_task", submit_command_task)
-        print(self.scheduler.tasks)
         return self.__single_execute_task(submit_command_task)
 
     def retrieve_application_logs(self, application_id):
