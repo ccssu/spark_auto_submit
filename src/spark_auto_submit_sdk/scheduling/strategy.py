@@ -46,20 +46,11 @@ class RemoteSchedulingStrategy(SchedulingStrategy):
             loger.info("Scheduling task: %s", task.name)
             # 调度逻辑实现
             with performance_decorator(task.name):
-                result = task.run()
+                if task.name == 'submit_command_task':
+                    result = task.run_remote()
+                else:
+                    result = task.run()
             # 将结果信息添加到结果信息列表
             result_list.append(result)
         # 返回结果信息列表
         return result_list
-
-
-# class PrioritySchedulingStrategy(SchedulingStrategy):
-#     def schedule(self, tasks):
-#         print("Performing priority-based scheduling.")
-#         # 调度逻辑实现
-
-
-# class TimeBasedSchedulingStrategy(SchedulingStrategy):
-#     def schedule(self, tasks):
-#         print("Performing time-based scheduling.")
-#         # 调度逻辑实现

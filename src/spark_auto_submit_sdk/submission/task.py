@@ -152,7 +152,6 @@ class SubmitCommandTask(Task):
 
     def run_remote(self):
         super().run()
-        local_command = self.submission_parameters
         # 上传文件
         main_file = self.submission_parameters.main_file
         remote_dir = "/data/guangnian/temp"
@@ -166,6 +165,7 @@ class SubmitCommandTask(Task):
         ] = self._default_name(remote_dir, python_env)
 
         hadoop = "/usr/local/service/hadoop/bin/hadoop"
+        
         execute_callback = lambda x: print(x)
         python_zip_path = self.submission_parameters.project_package.get(
             "python_zip_path"
