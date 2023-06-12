@@ -10,30 +10,40 @@ class DefaultZipManager:
         self.directory_path = directory_path
 
     def get_dir_files(self):
+        # 每个文件绝对路径
         files_list = []
         for root, dirs, files in os.walk(self.directory_path):
             for file in files:
                 file_path = os.path.join(root, file)
-                relative_path = os.path.relpath(file_path, self.directory_path)
-                files_list.append(relative_path)
+                files_list.append(file_path)
         return files_list
 
     def _compress_files(self, files, zip_file, progress_bar):
         progress_bar.total = len(files)
-        for file in files:
-            zip_file.write(file)
+        for file_path in files:
+            # arcname: 压缩文件中的文件名
+            parent_dir = os.path.dirname(self.directory_path)
+            arcname = os.path.relpath(file_path, parent_dir)
+            zip_file.write(file_path, arcname=arcname)
             progress_bar.update(1)
 
     def zip_files(
-        self, file_list, save_to_dir, zip_filename, description="Compressing"
+        self, file_list, output_path, description="Compressing"
     ):
-        zip_path = os.path.join(save_to_dir, zip_filename)
+        zip_path = output_path
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zip_file:
             progress_bar = tqdm(unit="file(s)", desc=description)
             self._compress_files(file_list, zip_file, progress_bar)
             progress_bar.close()
         return zip_path
 
+    def zip_directory(self, directory_path, output_path, description="Compressing"):
+        # 实现 zip -r xxx.zip xxx
+        self.directory_path = directory_path
+        file_list = self.get_dir_files()
+        return self.zip_files(file_list, output_path, description)
+
+    
 
 if __name__ == "__main__":
     # 示例用法

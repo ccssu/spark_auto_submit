@@ -56,7 +56,7 @@ class SSHNode(BaseNode):
         logger.warning(f"注意暂时只能上传文件，不能上传文件夹, 传入的路径是{source_path} 是否是文件：{check_file}")
         
         sftp_client = self.ssh_client.open_sftp()
-        self.__upload_file(sftp_client, source_path, destination_path)
+        self._upload_file(sftp_client, source_path, destination_path)
         sftp_client.close()
         
     def download_file(self, remote_file, local_path):

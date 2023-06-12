@@ -1,2 +1,2 @@
-from .proxy_node import *
-from .ssh_node import *
+from .proxy_node import ProxyNode
+from .ssh_node import SSHNode
