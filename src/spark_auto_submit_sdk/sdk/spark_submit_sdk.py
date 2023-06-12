@@ -71,10 +71,10 @@ class SparkAutoSubmitSDK:
         submission_parameters = self.__single_execute_task(build_command_task)
         return submission_parameters
 
-    def submit_application(self, submission_parameters):
+    def submit_application(self, submission_parameters, node=None):
         # 提交任务
         submit_command_task = self.factory.create_submit_command_task(
-            "submit_command_task", submission_parameters
+            "submit_command_task", submission_parameters,node=node
         )
         return self.__single_execute_task(submit_command_task)
 

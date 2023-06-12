@@ -43,9 +43,9 @@ class RemoteSchedulingStrategy(SchedulingStrategy):
         result_list = []
         for task in tasks:
             # 打印任务信息
-            loger.info("Scheduling task: %s", task.name)
             # 调度逻辑实现
             with performance_decorator(task.name):
+                loger.info("Scheduling task: %s", task.name)
                 if task.name == 'submit_command_task':
                     result = task.run_remote()
                 else:

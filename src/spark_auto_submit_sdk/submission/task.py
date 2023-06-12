@@ -134,10 +134,10 @@ class BuildCommandTask(Task):
 
 # 提交指令 任务
 class SubmitCommandTask(Task):
-    def __init__(self, name, submission_parameters: SubmissionParameters):
-        super().__init__(name, node=None)  # node 为提交的节点信息
+    def __init__(self, name, submission_parameters: SubmissionParameters, node=None):
+        super().__init__(name)  # node 为提交的节点信息
         self.submission_parameters = submission_parameters
-        self.node = None
+        self.node = node 
 
     def run(self):
         super().run()
@@ -151,7 +151,6 @@ class SubmitCommandTask(Task):
         return output
 
     def run_remote(self):
-        super().run()
         # 上传文件
         main_file = self.submission_parameters.main_file
         remote_dir = "/data/guangnian/temp"

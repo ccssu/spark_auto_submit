@@ -37,9 +37,9 @@ class SparkAutoSubmitSDKFactory:
 
     # SubmitCommandTask
     def create_submit_command_task(
-        self, name, submission_parameters: SubmitCommandTask
+        self, name, submission_parameters: SubmitCommandTask,node
     ):
-        return SubmitCommandTask(name, submission_parameters)
+        return SubmitCommandTask(name, submission_parameters,node)
 
     def create_monitoring(self):
         return Monitoring()

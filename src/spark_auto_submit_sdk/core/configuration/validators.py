@@ -49,8 +49,8 @@ class Validators:
             if config.get("SSH", None) is None:
                 raise ValueError("Missing SSH configuration in yarn mode")
 
-            # HDFS
-            if config.get("HDFS", None) is None:
-                raise ValueError("Missing HDFS configuration in yarn mode")
+            # # HDFS
+            # if config.get("HDFS", None) is None:
+            #     raise ValueError("Missing HDFS configuration in yarn mode")
 
         return config
