@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import logging
 import os
 from spark_auto_submit_sdk.core.default_zip_manager import DefaultZipManager
 
@@ -9,7 +10,7 @@ from spark_auto_submit_sdk.core.utils.default_utils import (
     working_directory,
 )
 from .submission_parameters import SubmissionParameters
-
+logger = logging.getLogger(__name__)
 __all__ = ["PackageTask", "BuildCommandTask", "SubmitCommandTask"]
 
 
@@ -62,35 +63,30 @@ class PackageTask(Task):
             with working_directory(project_dir):
                 zip_worker = DefaultZipManager(project_dir)
                 file_list = get_non_ignored_files(project_dir)
-                file_list = [
-                    os.path.relpath(file_path, project_dir) for file_path in file_list
-                ]
                 output_path = self.__default_output_path(project_dir)
                 project_zip_path = output_path
                 if not self.chache:
                     self.__remove_file(output_path)
-
                 if os.path.exists(output_path):
                     project_zip_path = output_path
                 else:
-                    project_zip_path = zip_worker.zip_code_files(
+                    project_zip_path = zip_worker.zip_files(
                         file_list, output_path, description="压缩项目代码.zip"
                     )
 
         if python_env:
-            with working_directory(python_env):
-                zip_worker = DefaultZipManager(python_env)
-                output_path = self.__default_output_path(project_dir)
-                python_zip_path = output_path
-                if not self.chache:
-                    self.__remove_file(output_path)
+            zip_worker = DefaultZipManager(python_env)
+            output_path = self.__default_output_path(python_env)
+            python_zip_path = output_path
+            if not self.chache:
+                self.__remove_file(output_path)
 
-                if os.path.exists(output_path):
-                    python_zip_path = output_path
-                else:
-                    python_zip_path = zip_worker.zip_directory(
-                        python_env, output_path, description="压缩python环境.zip"
-                    )
+            if os.path.exists(output_path):
+                python_zip_path = output_path
+            else:
+                python_zip_path = zip_worker.zip_directory(
+                    python_env, output_path, description="压缩python环境.zip"
+                )
 
         result = {
             "project_zip_path": project_zip_path,
@@ -147,7 +143,7 @@ class SubmitCommandTask(Task):
     # 远程运行
     def _default_name(self, romte_dir, local_file):
         file_name = get_file_basename(local_file)
-        output = os.join(romte_dir, file_name)
+        output = os.path.join(romte_dir, file_name)
         return output
 
     def run_remote(self):
@@ -156,42 +152,51 @@ class SubmitCommandTask(Task):
         remote_dir = "/data/guangnian/temp"
         self.node.transfer_data(main_file, remote_dir)
         self.submission_parameters.main_file = self._default_name(remote_dir, main_file)
+
         # 上传文件
         python_env = self.submission_parameters.project_package.get("python_zip_path")
         self.node.transfer_data(python_env, remote_dir)
-        self.submission_parameters.project_package[
-            "python_zip_path"
-        ] = self._default_name(remote_dir, python_env)
-
         hadoop = "/usr/local/service/hadoop/bin/hadoop"
-        
-        execute_callback = lambda x: print(x)
-        python_zip_path = self.submission_parameters.project_package.get(
-            "python_zip_path"
-        )
+        execute_callback = lambda x: logger.info(x)
+        remote_python_env = self._default_name(remote_dir, python_env)
         self.node.execute_command(
-            f"{hadoop} fs -put {python_zip_path} /py_env/{get_file_basename(python_zip_path)}",
+            f"{hadoop} fs -put {remote_python_env} /py_env/{get_file_basename(remote_python_env)}",
             execute_callback,
         )
+        self.submission_parameters.project_package[
+            "python_zip_path"
+        ] = f"hdfs:///py_env/{get_file_basename(remote_python_env)}"
 
         # 上传文件
         project_dir = self.submission_parameters.project_package.get("project_zip_path")
         self.node.transfer_data(project_dir, remote_dir)
+        
         self.submission_parameters.project_package[
             "project_zip_path"
         ] = self._default_name(remote_dir, project_dir)
+
         # 上传文件
-        datasets_dir = self.submission_parameters.project_package.get(
-            "datasets_zip_path"
-        )
-        self.node.transfer_data(datasets_dir, remote_dir)
-        self.submission_parameters.project_package[
-            "datasets_zip_path"
-        ] = self._default_name(remote_dir, datasets_dir)
+        try:
+            datasets_dir = self.submission_parameters.project_package.get(
+                "datasets_zip_path"
+            )
+            self.node.transfer_data(datasets_dir, remote_dir)
+            self.submission_parameters.project_package[
+                "datasets_zip_path"
+            ] = self._default_name(remote_dir, datasets_dir)
+        except Exception as e:
+            logger.warning(e)
 
         cmd = self.submission_parameters.to_spark_submit_command()
-
-        self.node.execute_command(cmd)
+        
+        logger.info(f"执行命令：{cmd}")
+        
+        # 确认执行 cmd
+        flag = input("是否执行命令？(y/n)")
+        if flag == "y":
+            self.node.execute_command(cmd)
+        else:
+            logger.info("取消执行命令")
 
     # node.transfer_data(zip_path, '/data/guangnian/temp')
     # # result = node.transfer_data('/workspace/DEMO/test_project00/pyspark_venv.tar.gz', '/data/guangnian/temp')

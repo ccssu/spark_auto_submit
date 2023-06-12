@@ -49,13 +49,13 @@ class SubmissionParameters:
         package_list.append(
             {"--archives": f"{project_package.get('python_zip_path')}#PY3"}
         )
-        project_zip_path = project_package.get("project_zip_path")
+        python_zip_path = project_package.get("python_zip_path")
         # 去掉文件.zip后缀
-        project_zip_name = os.path.basename(project_zip_path)
-        project_zip_name = project_zip_name.split(".")[0]
+        python_zip = os.path.basename(python_zip_path)
+        python_zip = python_zip.split(".")[0]
         package_list.append(
             {
-                "--conf": f"spark.yarn.appMasterEnv.PYSPARK_PYTHON=./PY3/{project_zip_name}/bin/python"
+                "--conf": f"spark.yarn.appMasterEnv.PYSPARK_PYTHON=./PY3/{python_zip}/bin/python"
             }
         )
         return package_list
@@ -78,8 +78,7 @@ class SubmissionParameters:
             + " \\\n"
             + " \\\n".join(spark_submit_args)
             + " \\\n"
-            + self.main_file
-            + " \\\n"
-            + " \\\n".join(args)
+            + self.main_file 
+            + ( (" \\\n" + " \\\n".join(args)) if len(args) > 0 else  "\n")
         )
         return submit_command

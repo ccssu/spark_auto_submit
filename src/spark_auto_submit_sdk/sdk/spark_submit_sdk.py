@@ -62,7 +62,6 @@ class SparkAutoSubmitSDK:
 
         sdk_config = self.config.get("SPARK_SUBMIT")
         project_package = self.__pack_project(chache=chache)
-
         params_dict = {"app_name": app_name, "main_file": main_file, "args": args}
         # 构建指令任务
         build_command_task = self.factory.create_build_command_task(
@@ -74,7 +73,7 @@ class SparkAutoSubmitSDK:
     def submit_application(self, submission_parameters, node=None):
         # 提交任务
         submit_command_task = self.factory.create_submit_command_task(
-            "submit_command_task", submission_parameters,node=node
+            "submit_command_task", submission_parameters, node=node
         )
         return self.__single_execute_task(submit_command_task)
 
