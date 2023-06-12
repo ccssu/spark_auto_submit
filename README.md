@@ -33,6 +33,7 @@ args = [{"--idf_path":"data/idf.txt"},
         {"--result_path":"result.txt"},
         {"--no-save":" "} 
         ]
+        
 submission_params = sdk.create_submission_parameters(app_name, main_file, args)
 
 # 提交应用程序
